@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>吹き出し</title>
+<style>
+  html, body { margin: 0; background: transparent; overflow: hidden; user-select: none; }
+  #wrap {
+    position: absolute; left: 0; top: 0; width: max-content; padding: 6px 8px 14px; opacity: 0; transform: translateY(6px) scale(0.96);
+    transform-origin: 50% 100%; transition: opacity .2s ease, transform .2s ease;
+  }
+  #wrap.show { opacity: 1; transform: none; }
+  #bubble {
+    position: relative; max-width: 240px; padding: 10px 14px; border-radius: 16px;
+    background: #fff; border: 2px solid #f0a35e; color: #3a2a1e;
+    font: 600 15px/1.5 "Yu Gothic UI", "Meiryo", system-ui, sans-serif; white-space: pre-wrap; word-break: break-word;
+  }
+  /* しっぽ (頭のほうを指す) */
+  #bubble::after, #bubble::before {
+    content: ""; position: absolute; left: 50%; transform: translateX(-50%); border-style: solid; border-color: transparent;
+  }
+  #bubble::before { bottom: -12px; border-width: 11px 9px 0; border-top-color: #f0a35e; }
+  #bubble::after { bottom: -8px; border-width: 9px 7px 0; border-top-color: #fff; }
+</style>
+</head>
+<body>
+<div id="wrap"><div id="bubble"></div></div>
+<script>
+  const wrap = document.getElementById('wrap');
+  const bubble = document.getElementById('bubble');
+  window.mate.onBubbleText((text) => {
+    bubble.textContent = text;
+    wrap.classList.remove('show');
+    // 文字数に合わせた大きさをメイン側に伝えてから、ふわっと表示する
+    // (ウィンドウが隠れている間は描画のタイミングが来ないので、タイマーで進める)
+    const rect = wrap.getBoundingClientRect();
+    window.mate.bubbleSize({ width: rect.width, height: rect.height });
+    setTimeout(() => wrap.classList.add('show'), 60);
+  });
+  window.mate.onBubbleHide(() => wrap.classList.remove('show'));
+</script>
+</body>
+</html>

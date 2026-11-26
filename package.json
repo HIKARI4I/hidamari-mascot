@@ -1,0 +1,22 @@
+{
+  "name": "hidamari-mascot",
+  "version": "0.9.5",
+  "description": "VRMキャラがデスクトップに住むマスコットアプリ (Electron + three-vrm)",
+  "main": "src/main.js",
+  "license": "MIT",
+  "scripts": {
+    "postinstall": "install-electron --no",
+    "start": "electron .",
+    "motions": "node tools/make-motions.mjs"
+  },
+  "dependencies": {
+    "@pixiv/three-vrm": "^3.4.0",
+    "@pixiv/three-vrm-animation": "^3.4.0",
+    "koffi": "^3.3.8",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "electron": "^45.4.1"
+  },
+  "productName": "Hidamari Mascot"
+}

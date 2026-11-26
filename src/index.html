@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Hidamari Mascot</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  #notice {
+    position: fixed; left: 12px; right: 12px; bottom: 12px; padding: 12px 16px; text-align: center;
+    font: 14px/1.5 "Yu Gothic UI", "Meiryo", sans-serif; color: #fff;
+    background: rgba(30, 30, 40, 0.85); border-radius: 10px; display: none;
+  }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "../node_modules/three/build/three.module.js",
+    "three/addons/": "../node_modules/three/examples/jsm/",
+    "@pixiv/three-vrm": "../node_modules/@pixiv/three-vrm/lib/three-vrm.module.js",
+    "@pixiv/three-vrm-animation": "../node_modules/@pixiv/three-vrm-animation/lib/three-vrm-animation.module.js"
+  }
+}
+</script>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<div id="notice"></div>
+<script type="module" src="./renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Hidamari Mascot 設定</title>
+<style>
+  :root {
+    --bg: #f6f4f1; --card: #ffffff; --line: #e4e0da; --text: #2b2723; --sub: #7a726a;
+    --accent: #e8862e; --accent-dark: #c96d1b; --accent-soft: #fff6ec;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0; overflow: hidden; background: var(--bg); color: var(--text);
+    font: 14px/1.6 "Yu Gothic UI", "Meiryo", system-ui, sans-serif; user-select: none;
+  }
+  nav { display: flex; gap: 4px; padding: 14px 16px 0; border-bottom: 1px solid var(--line); background: var(--card); }
+  nav button {
+    border: 0; background: none; padding: 8px 12px 10px; border-bottom: 3px solid transparent;
+    font: inherit; font-weight: 600; color: var(--sub); cursor: pointer; border-radius: 0;
+  }
+  nav button:hover { color: var(--accent-dark); }
+  nav button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+  main { padding: 16px; height: calc(100vh - 54px); overflow-y: auto; }
+  .tab { display: none; }
+  .tab.active { display: block; }
+  section {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 12px;
+  }
+  .label { font-weight: 600; }
+  .hint { color: var(--sub); font-size: 12px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .row + .row { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+  #modelName { color: var(--sub); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 230px; }
+  button.btn, select, input[type="number"], input[type="time"], input[type="text"] {
+    font: inherit; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line);
+    background: #fff; color: var(--text);
+  }
+  button.btn { cursor: pointer; white-space: nowrap; }
+  button.btn:hover { border-color: var(--accent); color: var(--accent-dark); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.primary:hover { background: var(--accent-dark); color: #fff; }
+  input[type="number"] { width: 72px; }
+  input[type="text"] { flex: 1; min-width: 0; }
+  input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); margin: 8px 0 0; }
+  .choice { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .choice label { display: block; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+  .choice input { position: absolute; opacity: 0; }
+  .choice label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+  .choice label:has(input:focus-visible) { outline: 2px solid var(--accent); }
+  .choice b { display: block; }
+  .switch { position: relative; width: 44px; height: 24px; flex: none; }
+  .switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .switch span { position: absolute; inset: 0; border-radius: 12px; background: #cfc9c1; pointer-events: none; transition: background .15s; }
+  .switch span::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
+    background: #fff; transition: transform .15s;
+  }
+  .switch input:checked + span { background: var(--accent); }
+  .switch input:checked + span::after { transform: translateX(20px); }
+  .switch input:focus-visible + span { outline: 2px solid var(--accent-dark); outline-offset: 2px; }
+  .switch input:disabled + span { opacity: .45; }
+  .inline { display: flex; align-items: center; gap: 8px; }
+  #timerRemaining { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  #reminders { list-style: none; margin: 10px 0 0; padding: 0; }
+  #reminders li { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); }
+  #reminders time { font-weight: 700; font-variant-numeric: tabular-nums; }
+  #reminders span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #reminders button { padding: 2px 10px; }
+  #motions, .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  #motions button, .grid button { padding: 10px 6px; text-align: center; white-space: normal; line-height: 1.3; }
+  #motions small, .grid small { display: block; color: var(--sub); font-size: 11px; }
+  kbd { padding: 2px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; font: inherit; font-weight: 600; }
+  body.dropping::after {
+    content: "ここにVRMをドロップ"; position: fixed; inset: 8px; display: grid; place-items: center;
+    border: 3px dashed var(--accent); border-radius: 16px; background: rgba(255, 246, 236, .94);
+    font-size: 18px; font-weight: 700; color: var(--accent-dark); pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<nav role="tablist">
+  <button role="tab" data-tab="basic" aria-selected="true">基本</button>
+  <button role="tab" data-tab="talk" aria-selected="false">おしゃべり・タイマー</button>
+  <button role="tab" data-tab="motion" aria-selected="false">モーション・表情</button>
+  <button role="tab" data-tab="system" aria-selected="false">システム</button>
+</nav>
+<main>
+
+<div class="tab active" id="tab-basic">
+  <section>
+    <div class="row">
+      <div>
+        <div class="label">キャラクター</div>
+        <div id="modelName">未選択</div>
+      </div>
+      <button class="btn" id="pick">VRMを選ぶ…</button>
+    </div>
+    <div class="hint" style="margin-top:8px">VRMファイルを、この画面かキャラの上にドラッグ&ドロップしても入れ替えられます。</div>
+  </section>
+
+  <section>
+    <div class="row">
+      <label class="label" for="height">サイズ</label>
+      <span class="hint"><span id="heightValue">450</span> px</span>
+    </div>
+    <input id="height" type="range" min="150" max="1000" step="10">
+  </section>
+
+  <section>
+    <div class="label">ドラッグして離した時</div>
+    <div class="choice">
+      <label><input type="radio" name="landing" value="fall"><b>地面に着地</b><span class="hint">足場まで落ちて立つ</span></label>
+      <label><input type="radio" name="landing" value="float"><b>その場で浮く</b><span class="hint">離した場所に留まる</span></label>
+    </div>
+  </section>
+
+  <section>
+    <div class="row">
+      <div>
+        <label class="label" for="wander">自由に動き回る</label>
+        <div class="hint">ときどき歩く・座る（「地面に着地」の時）</div>
+      </div>
+      <label class="switch"><input id="wander" type="checkbox"><span></span></label>
+    </div>
+    <div class="row">
+      <div>
+        <label class="label" for="rideWindows">ウィンドウの上に乗る</label>
+        <div class="hint" id="rideHint">ほかのウィンドウの上に落とすと、その上に立つ</div>
+      </div>
+      <label class="switch"><input id="rideWindows" type="checkbox"><span></span></label>
+    </div>
+    <div class="row">
+      <label class="label" for="lookAtCursor">カーソルを目で追う</label>
+      <label class="switch"><input id="lookAtCursor" type="checkbox"><span></span></label>
+    </div>
+    <div class="row">
+      <label class="label" for="alwaysOnTop">常に最前面に表示</label>
+      <label class="switch"><input id="alwaysOnTop" type="checkbox"><span></span></label>
+    </div>
+    <div class="row">
+      <div>
+        <div class="label">向き</div>
+        <div class="hint">キャラを右クリックしたままドラッグで、左右・上下に回せます</div>
+      </div>
+      <button class="btn" id="resetView">正面に戻す</button>
+    </div>
+    <div class="row">
+      <div>
+        <div class="label">位置</div>
+        <div class="hint">見失った時はここから戻せます</div>
+      </div>
+      <button class="btn" id="reset">画面中央に戻す</button>
+    </div>
+  </section>
+</div>
+
+<div class="tab" id="tab-talk">
+  <section>
+    <div class="row">
+      <div>
+        <label class="label" for="chatter">おしゃべりする</label>
+        <div class="hint">あいさつ、ひとりごと、クリックやなでた時の一言</div>
+      </div>
+      <label class="switch"><input id="chatter" type="checkbox"><span></span></label>
+    </div>
+    <div class="row">
+      <label class="label" for="hourly">時報（毎時0分に知らせる）</label>
+      <label class="switch"><input id="hourly" type="checkbox"><span></span></label>
+    </div>
+    <div class="row">
+      <div>
+        <label class="label" for="pcReact">PCの状態に反応する</label>
+        <div class="hint">バッテリー残量、CPU・メモリの負荷、5分触らないと居眠り</div>
+      </div>
+      <label class="switch"><input id="pcReact" type="checkbox"><span></span></label>
+    </div>
+    <div class="row">
+      <div class="hint">セリフは <b>src/lines.js</b> で書き換えられます</div>
+      <button class="btn" id="sayTest">しゃべらせてみる</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="label">タイマー</div>
+    <div class="row" id="timerIdle" style="margin-top:8px">
+      <div class="inline"><input id="timerMinutes" type="number" min="1" max="600" value="25" aria-label="タイマーの分数"><span>分</span></div>
+      <button class="btn primary" id="timerStart">スタート</button>
+    </div>
+    <div class="row" id="timerRunning" style="margin-top:8px" hidden>
+      <div><span id="timerRemaining">00:00</span> <span class="hint">残り</span></div>
+      <button class="btn" id="timerCancel">取り消す</button>
+    </div>
+    <div class="row">
+      <label class="label" for="breakMinutes">休憩の声かけ</label>
+      <select id="breakMinutes">
+        <option value="0">しない</option>
+        <option value="30">30分ごと</option>
+        <option value="45">45分ごと</option>
+        <option value="60">60分ごと</option>
+        <option value="90">90分ごと</option>
+      </select>
+    </div>
+  </section>
+
+  <section>
+    <div class="label">リマインダー</div>
+    <div class="hint">毎日その時刻に、手を振って知らせます</div>
+    <div class="inline" style="margin-top:8px">
+      <input id="reminderTime" type="time" value="12:00" aria-label="知らせる時刻">
+      <input id="reminderText" type="text" maxlength="60" placeholder="例：お昼ごはん" aria-label="知らせる内容">
+      <button class="btn" id="reminderAdd">追加</button>
+    </div>
+    <ul id="reminders"></ul>
+  </section>
+</div>
+
+<div class="tab" id="tab-motion">
+  <section>
+    <div class="label">モーションを試す</div>
+    <div class="hint">押すと、キャラがその動きを5秒間します。motions フォルダの .vrma はすべてここに並びます。</div>
+    <div id="motions"></div>
+  </section>
+  <section id="expressionSection" hidden>
+    <div class="label">表情を試す</div>
+    <div class="hint">押すと、キャラがその表情を3秒間します。モデルに入っている表情がここに並びます。</div>
+    <div id="expressions" class="grid"></div>
+  </section>
+  <section>
+    <div class="hint">新しい .vrma は、キャラの上にドラッグ&ドロップすると motions フォルダに追加されます。ファイル名がモーション名になります。</div>
+  </section>
+</div>
+
+<div class="tab" id="tab-system">
+  <section>
+    <div class="row">
+      <label class="label" for="autoStart">Windowsの起動時に自動で立ち上げる</label>
+      <label class="switch"><input id="autoStart" type="checkbox"><span></span></label>
+    </div>
+    <div class="row">
+      <div>
+        <label class="label" for="hideOnFullscreen">全画面のアプリの間は隠れる</label>
+        <div class="hint" id="fullscreenHint">ゲームや動画を全画面にすると、自動で隠れます</div>
+      </div>
+      <label class="switch"><input id="hideOnFullscreen" type="checkbox"><span></span></label>
+    </div>
+    <div class="row">
+      <div>
+        <div class="label">隠す・表示するショートカット</div>
+        <div class="hint">どのアプリを使っていても効きます</div>
+      </div>
+      <kbd id="hideShortcut">Ctrl + Alt + H</kbd>
+    </div>
+  </section>
+</div>
+
+</main>
+<script src="./settings.js"></script>
+</body>
+</html>

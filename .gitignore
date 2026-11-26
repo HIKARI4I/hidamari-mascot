@@ -1,0 +1,7 @@
+node_modules/
+dist/
+# モデルは各自で用意する (ライセンスの都合で同梱しない)
+models/*
+!models/README.md
+mate.log
+refs/
