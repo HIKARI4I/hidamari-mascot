@@ -3,8 +3,6 @@
 VRMキャラクターがデスクトップに住むマスコットアプリです（Windows / Electron + three-vrm）。
 自分のVRMモデルを置くだけで、歩いたり座ったり、クリックに反応したりします。
 
-> 以前の名前は `hikari-desktop-mate` です。市販アプリ「Desktop Mate」とは関係ありません。
-
 ## 動かし方
 
 1. [Node.js](https://nodejs.org/) を入れる
