@@ -24,6 +24,7 @@ const ACTION_FACE = {
   doze: [['sleepy', 'blink'], 0.2, 0.75], angry: [['rage', 'angry'], 0.1, 0.9], startled: [['fear', 'surprised'], 0, 0.6],
   'look-around': [['puzzled'], 0.15, 0.85], hair: [['shy', 'smile'], 0.2, 0.85], skirt: [['shy'], 0.2, 0.85],
   'peek-up': [['surprisedO', 'awe'], 0.25, 0.8], reach: [['serious'], 0.2, 0.8], crouch: [['thinking'], 0.2, 0.8],
+  pose: [['winkRight', 'happy'], 0.14, 0.86],
 };
 // 何もしていない時に、ときどき浮かべる表情 (名前: 選ばれやすさ)。モデルが持っているものだけ使う
 const AMBIENT_FACES = {
@@ -307,6 +308,10 @@ function updateBehavior(dt) {
   }
   if (asleep) {
     if (behavior !== 'sit') setBehavior('sit', 5);
+    return;
+  }
+  if (demo) {
+    updateDemo(dt);
     return;
   }
   if (behavior === 'walk' && !canWander()) setBehavior('idle', rand(4, 8));
@@ -754,6 +759,84 @@ mate.onCursor((p) => {
   }
 });
 
+// ---------- デモ (紹介動画の撮影用) ----------
+// 決まった順番で動きを見せる。トレイのメニューか Ctrl+Alt+D で始まり、キャラをクリックすると途中で止まる。
+//   action: 1回きりの仕草 (その .vrma が無ければ飛ばす) / behavior: idle・walk・sit を dur 秒
+//   spin: その間に左右へ回す量 (ラジアン。2π で1回転) / tilt: 途中で上からのぞき込む角度 / sway: 左右に振る幅 / say: 吹き出し
+const DEMO = [
+  { action: 'bow', say: 'はじめまして！' },
+  { action: 'wave-both', dur: 4 },
+  { behavior: 'idle', dur: 5, spin: Math.PI * 2, tilt: 0.3, say: 'くるっと回れるよ' },
+  { action: 'heart', dur: 4.5 },
+  { behavior: 'walk', dir: -1, dur: 2.2 },
+  { behavior: 'walk', dir: 1, dur: 2.2 },
+  { action: 'joy-jump', dur: 4.5 },
+  { action: 'dance', dur: 8, sway: 0.6 },
+  { action: 'pose', say: 'よろしくね！' },
+];
+let demo = null;
+
+function startDemo() {
+  if (!vrm || dragging || falling) return;
+  preview = null;
+  demo = { index: -1, t: 0, dur: 0, yaw0: 0, home: { yaw: viewYaw, pitch: viewPitch } };
+  viewYaw = 0;
+  viewPitch = 0;
+  nextDemoStep();
+}
+
+function stopDemo() {
+  if (!demo) return;
+  viewYaw = demo.home.yaw;
+  viewPitch = demo.home.pitch;
+  demo = null;
+  setBehavior('idle', rand(4, 8));
+}
+
+function nextDemoStep() {
+  demo.index += 1;
+  const stepDef = DEMO[demo.index];
+  if (!stepDef) {
+    stopDemo();
+    return;
+  }
+  demo.t = 0;
+  demo.yaw0 = viewYaw;
+  if (stepDef.action) {
+    if (!actions[stepDef.action]) {
+      nextDemoStep(); // そのモーションが無い時は飛ばす
+      return;
+    }
+    doAction(stepDef.action);
+    demo.dur = Math.min(stepDef.dur ?? Infinity, clipSeconds(stepDef.action, 3));
+  } else {
+    setBehavior(stepDef.behavior, 999);
+    if (stepDef.behavior === 'walk') walkDir = stepDef.dir;
+    demo.dur = stepDef.dur;
+  }
+  if (stepDef.say) mate.sayText(stepDef.say);
+}
+
+function updateDemo(dt) {
+  if (dragging || falling) {
+    stopDemo();
+    return;
+  }
+  const stepDef = DEMO[demo.index];
+  demo.t += dt;
+  const k = clamp(demo.t / demo.dur, 0, 1);
+  const ease = k * k * (3 - 2 * k);
+  if (stepDef.spin) viewYaw = demo.yaw0 + stepDef.spin * ease;
+  if (stepDef.sway) viewYaw = demo.yaw0 + stepDef.sway * Math.sin(k * Math.PI * 4) * Math.sin(k * Math.PI);
+  if (stepDef.tilt) viewPitch = stepDef.tilt * Math.sin(k * Math.PI);
+  if (demo.t >= demo.dur) {
+    viewYaw = Math.atan2(Math.sin(viewYaw), Math.cos(viewYaw));
+    viewPitch = 0;
+    nextDemoStep();
+  }
+}
+mate.onDemo(() => (demo ? stopDemo() : startDemo()));
+
 // ウィンドウに届いた本物のクリックを覚えておく
 const domSeen = {};
 for (const type of ['mousedown', 'mouseup']) {
@@ -784,6 +867,7 @@ window.addEventListener('mousedown', (e) => {
     return;
   }
   if (e.button !== 0 || !vrm || !overCharacter) return;
+  if (demo) stopDemo(); // デモの途中でさわったら、そこで終わり
   // つかんだ点を、キャラの足元から見た位置として覚える
   const px = e.clientX / ppm;
   const py = (window.innerHeight - e.clientY) / ppm;
@@ -894,6 +978,7 @@ mate.onDoStretch(() => {
   if (!dragging && !falling && !asleep && !preview) doAction('stretch');
 });
 mate.onWalkBlocked(() => {
+  if (demo && DEMO[demo.index]?.behavior === 'walk') demo.t = demo.dur; // 端に来たら、デモは次の動きへ
   // 画面の端に着いた、または歩けない状況だった
   walkingActive = false;
   if (behavior === 'walk') setBehavior('idle', rand(3, 6));

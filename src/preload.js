@@ -46,6 +46,8 @@ contextBridge.exposeInMainWorld('mate', {
   onPreview: on('preview'),
   onPreviewExpression: on('preview-expression'),
   onTalk: on('talk'),
+  onDemo: on('demo'),
+  sayText: (text) => ipcRenderer.send('say-text', text),
   onButton: on('button'),
   clickMissed: () => ipcRenderer.send('click-missed'),
   reportError: (text) => ipcRenderer.send('renderer-error', text),

@@ -15,6 +15,7 @@ const LOG_FILE = path.join(APP_DIR, 'mate.log');
 const WINDOW_SCALE = 1.3; // ウィンドウの一辺 = キャラの身長 × この値 (揺れと跳ねの余白)
 const TICK_MS = 16;
 const HIDE_SHORTCUT = 'Control+Alt+H';
+const DEMO_SHORTCUT = 'Control+Alt+D'; // 紹介用のデモを再生 / 停止
 const BUILT_IN_MOTIONS = ['idle', 'walk', 'sit', 'stretch', 'react', 'pat', 'drag', 'fall'];
 const IDLE_SLEEP_SECONDS = 300; // これだけPCを触らないと眠る
 
@@ -843,6 +844,7 @@ function buildMenu() {
     { label: 'タイマー', submenu: timerItems },
     { type: 'separator' },
     { label: 'VRMを選ぶ…', click: pickModel },
+    { label: 'デモを再生 / 停止', accelerator: DEMO_SHORTCUT, click: playDemo },
     { label: '画面中央に戻す', click: resetPosition },
     { label: '向きを正面に戻す', click: resetView },
     { type: 'separator' },
@@ -1000,6 +1002,16 @@ ipcMain.on('reminder-remove', (_e, id) => {
   sendSettings('settings-changed', publicSettings());
 });
 ipcMain.on('say-test', () => say(line('chatter')));
+// デモの台本にあるせりふを吹き出しに出す
+ipcMain.on('say-text', (_e, text) => {
+  if (typeof text === 'string' && text.length <= 60) say(text, 3.5);
+});
+
+// 紹介用のデモを描画側に始めさせる (もう一度呼ぶと止まる)
+function playDemo() {
+  if (!mateWin || hidden()) return;
+  sendMate('demo');
+}
 ipcMain.handle('get-settings', () => publicSettings());
 
 ipcMain.handle('get-model', () => {
@@ -1054,6 +1066,7 @@ if (!app.requestSingleInstanceLock()) {
     setInterval(everySecond, 1000);
     setInterval(watchPc, 5000);
     if (!globalShortcut.register(HIDE_SHORTCUT, toggleHidden)) log(`ショートカット ${HIDE_SHORTCUT} を登録できませんでした`);
+    if (!globalShortcut.register(DEMO_SHORTCUT, playDemo)) log(`ショートカット ${DEMO_SHORTCUT} を登録できませんでした`);
     powerMonitor.on('unlock-screen', () => { if (config.pcReact) say(line('unlock'), 5); });
     setTimeout(() => { if (config.chatter) say(greeting(), 5); }, 4000);
 
@@ -1066,6 +1079,7 @@ if (!app.requestSingleInstanceLock()) {
       setTimeout(() => {
         if (process.env.MATE_TEST_POSE) sendMate('preview', { name: process.env.MATE_TEST_POSE, seconds: 9999 });
         if (process.env.MATE_TEST_SLEEP) setSleeping(true);
+        if (process.env.MATE_TEST_DEMO) playDemo();
         if (process.env.MATE_TEST_TAB) settingsWin.webContents.executeJavaScript(`document.querySelector('[data-tab="${process.env.MATE_TEST_TAB}"]').click()`);
         if (process.env.MATE_TEST_DROP_FROM) {
           // 上から落として、足場に乗るかを確かめる

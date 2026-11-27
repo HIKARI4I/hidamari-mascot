@@ -1,6 +1,6 @@
 {
   "name": "hidamari-mascot",
-  "version": "0.9.5",
+  "version": "0.9.6",
   "description": "VRMキャラがデスクトップに住むマスコットアプリ (Electron + three-vrm)",
   "main": "src/main.js",
   "license": "MIT",

@@ -259,7 +259,34 @@ const stretch = {
   ],
 };
 
-const MOTIONS = { idle, walk, sit, react, drag, fall, pat, stretch };
+// ---- 9. 決めポーズ (3.4秒): 小さく沈んでから、右手を顔の横に上げ、左手を軽く広げて首をかしげる。デモの締めに使う ----
+const poseHold = {
+  pos: [0.012, 0.006, 0], hips: [0, 0.1, 0.04], spine: [-0.03, -0.06, -0.05], chest: [0, -0.04, 0], head: [0.02, 0.1, 0.14],
+  'B:UpperLeg': [0, 0, 0], 'B:LowerLeg': [0, 0, 0], 'L:Foot': [0, 0, 0], 'R:Foot': [0.1, 0, 0],
+  'R:Shoulder': [0, 0, 0.1], 'R:UpperArm': [-0.45, 0, 1.0], 'R:LowerArm': [0, 0.28, 2.05], 'R:Hand': [0, 0, -0.15],
+  'L:Shoulder': [0, 0, 0.02], 'L:UpperArm': [0.12, 0, 0.22], 'L:LowerArm': [0, -0.5, 0], 'L:Hand': [0, 0, 0.3], curlR: -0.25, curlL: -0.2,
+};
+const poseRest = {
+  pos: [0, 0, 0], hips: [0, 0, 0], spine: [0, 0, 0], chest: [0, 0, 0], head: [0, 0, 0],
+  'B:UpperLeg': [0, 0, 0], 'B:LowerLeg': [0, 0, 0], 'B:Foot': [0, 0, 0],
+  'B:Shoulder': [0, 0, 0], 'B:UpperArm': [0, 0, 0], 'B:LowerArm': [0, 0, 0], 'B:Hand': [0, 0, 0], curlR: 0, curlL: 0,
+};
+const pose = {
+  duration: 3.4, loop: false,
+  keys: [
+    [0, poseRest],
+    [0.18, { pos: [0, -0.012, 0], spine: [0.05, 0, 0], 'B:UpperLeg': [-0.1, 0, 0], 'B:LowerLeg': [0.2, 0, 0], 'B:Foot': [-0.1, 0, 0], 'R:UpperArm': [0, 0, 0.2], 'L:UpperArm': [0, 0, 0.15] }],
+    [0.5, poseHold],
+    [1.5, merge(poseHold, { head: [0.02, 0.12, 0.17], 'R:Hand': [0, 0, 0.2], pos: [0.012, 0.01, 0] })],
+    [2.6, merge(poseHold, { head: [0.02, 0.1, 0.13], 'R:Hand': [0, 0, -0.15] })],
+    [3.05, { pos: [0, 0, 0], hips: [0, 0.02, 0], spine: [0, 0, -0.01], chest: [0, 0, 0], head: [0, 0.02, 0.03], 'R:Foot': [0, 0, 0],
+      'R:Shoulder': [0, 0, 0.05], 'R:UpperArm': [-0.4, 0, 0.4], 'R:LowerArm': [0, -0.7, 0.2], 'R:Hand': [0, 0, 0],
+      'L:Shoulder': [0, 0, 0], 'L:UpperArm': [0.03, 0, 0.1], 'L:LowerArm': [0, -0.1, 0], 'L:Hand': [0, 0, 0], curlR: -0.1, curlL: -0.05 }],
+    [3.4, poseRest],
+  ],
+};
+
+const MOTIONS = { idle, walk, sit, react, drag, fall, pat, stretch, pose };
 
 // ======================================================================
 // ここから下は、補間と .vrma (glTF バイナリ) の書き出し

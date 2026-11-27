@@ -30,6 +30,7 @@
 
 - くり返す動き: `idle` 待機 / `walk` 歩き / `sit` 座り / `sleep` 眠る / `drag` つかまれ / `fall` 落下 / `pat` なでられ
 - 1回きりの仕草: 上以外の名前はすべて「1回再生して待機に戻る」動きとして扱います
+  - デモ(`Ctrl+Alt+D`)の最後に使う: `pose`
   - 待機中にひとりでにする: `stretch` `look-around` `hair` `yawn` `skirt` `peek-up` `reach` `crouch` `doze` `heart` `wave-both` `joy-jump` `bow` `dance`
   - きっかけがある: `react` (クリック・お知らせ) / `angry` (3秒以内に4回クリック) / `startled` (高い所から落ちた直後) / `bow` (起動時)
   - 設定画面からだけ再生できる: `lie-down` (横に大きく動くのでウィンドウからはみ出します)

@@ -7,7 +7,7 @@ const MOTION_LABELS = {
   idle: '待機', walk: '歩き', sit: '座り', stretch: '伸び', react: '手を振る', pat: 'なでられ', drag: 'つかまれ', fall: '落下',
   sleep: '眠る', startled: 'びっくり', 'look-around': 'きょろきょろ', yawn: 'あくび', hair: '髪をさわる', skirt: 'スカートを直す',
   'peek-up': '見上げる', doze: 'うとうと', 'wave-both': '両手を振る', angry: 'ぷんぷん', heart: 'ハート', 'joy-jump': '喜んでジャンプ',
-  reach: '手を伸ばす', crouch: 'しゃがむ', 'lie-down': '寝転ぶ', bow: 'おじぎ', dance: 'ダンス',
+  reach: '手を伸ばす', crouch: 'しゃがむ', 'lie-down': '寝転ぶ', bow: 'おじぎ', dance: 'ダンス', pose: '決めポーズ',
 };
 
 const EXPRESSION_LABELS = {
