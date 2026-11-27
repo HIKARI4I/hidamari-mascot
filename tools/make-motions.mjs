@@ -10,6 +10,7 @@
 //   'B:UpperArm'               … 左右両方に同じ動き
 //   pos                        … 腰の位置の移動 [左右, 上下, 前後] (メートル。腰の高さ 0.85 のモデル基準)
 //   curlL / curlR              … 指の丸みの増減
+//   peaceL / peaceR            … 1 でピースサインの指 (0 でふつう)
 // 角度の向き: x マイナス=前へ振る (ひざ・ひじはプラスで曲がる) / z プラス=腕が上がる・脚が外へ開く
 // キーに書かなかった骨は、その骨が書かれている前後のキーの間を補間する。
 import fs from 'node:fs';
@@ -34,6 +35,8 @@ function mirror(pose) {
     else if (key.startsWith('R:')) out[`L:${key.slice(2)}`] = value;
     else if (key === 'curlL') out.curlR = value;
     else if (key === 'curlR') out.curlL = value;
+    else if (key === 'peaceL') out.peaceR = value;
+    else if (key === 'peaceR') out.peaceL = value;
     else if (key === 'pos') out.pos = [-value[0], value[1], value[2]];
     else if (key.startsWith('B:') || key === 'curl') out[key] = value;
     else out[key] = mirrorCenter(value);
@@ -259,17 +262,18 @@ const stretch = {
   ],
 };
 
-// ---- 9. 決めポーズ (3.4秒): 小さく沈んでから、右手を顔の横に上げ、左手を軽く広げて首をかしげる。デモの締めに使う ----
+// ---- 9. 決めポーズ (3.4秒): 小さく沈んでから、右手で顔の横にピースサインを作り、首をかしげる。デモの締めに使う ----
 const poseHold = {
   pos: [0.012, 0.006, 0], hips: [0, 0.1, 0.04], spine: [-0.03, -0.06, -0.05], chest: [0, -0.04, 0], head: [0.02, 0.1, 0.14],
   'B:UpperLeg': [0, 0, 0], 'B:LowerLeg': [0, 0, 0], 'L:Foot': [0, 0, 0], 'R:Foot': [0.1, 0, 0],
-  'R:Shoulder': [0, 0, 0.1], 'R:UpperArm': [-0.45, 0, 1.0], 'R:LowerArm': [0, 0.28, 2.05], 'R:Hand': [0, 0, -0.15],
-  'L:Shoulder': [0, 0, 0.02], 'L:UpperArm': [0.12, 0, 0.22], 'L:LowerArm': [0, -0.5, 0], 'L:Hand': [0, 0, 0.3], curlR: -0.25, curlL: -0.2,
+  'R:Shoulder': [0, 0, 0.1], 'R:UpperArm': [0, -0.9, 0.25], 'R:LowerArm': [0, -0.3, 2.5], 'R:Hand': [0, 0, 0],
+  'L:Shoulder': [0, 0, 0.02], 'L:UpperArm': [0.04, 0, -0.06], 'L:LowerArm': [0, -0.15, 0], 'L:Hand': [0, 0, 0.1], curlR: 0, curlL: -0.1, peaceR: 1,
 };
+if (process.env.POSE_TRY) Object.assign(poseHold, JSON.parse(process.env.POSE_TRY)); // 開発用: 数値を試す
 const poseRest = {
   pos: [0, 0, 0], hips: [0, 0, 0], spine: [0, 0, 0], chest: [0, 0, 0], head: [0, 0, 0],
   'B:UpperLeg': [0, 0, 0], 'B:LowerLeg': [0, 0, 0], 'B:Foot': [0, 0, 0],
-  'B:Shoulder': [0, 0, 0], 'B:UpperArm': [0, 0, 0], 'B:LowerArm': [0, 0, 0], 'B:Hand': [0, 0, 0], curlR: 0, curlL: 0,
+  'B:Shoulder': [0, 0, 0], 'B:UpperArm': [0, 0, 0], 'B:LowerArm': [0, 0, 0], 'B:Hand': [0, 0, 0], curlR: 0, curlL: 0, peaceR: 0,
 };
 const pose = {
   duration: 3.4, loop: false,
@@ -277,11 +281,11 @@ const pose = {
     [0, poseRest],
     [0.18, { pos: [0, -0.012, 0], spine: [0.05, 0, 0], 'B:UpperLeg': [-0.1, 0, 0], 'B:LowerLeg': [0.2, 0, 0], 'B:Foot': [-0.1, 0, 0], 'R:UpperArm': [0, 0, 0.2], 'L:UpperArm': [0, 0, 0.15] }],
     [0.5, poseHold],
-    [1.5, merge(poseHold, { head: [0.02, 0.12, 0.17], 'R:Hand': [0, 0, 0.2], pos: [0.012, 0.01, 0] })],
-    [2.6, merge(poseHold, { head: [0.02, 0.1, 0.13], 'R:Hand': [0, 0, -0.15] })],
+    [1.5, merge(poseHold, { head: [0.02, 0.12, 0.17], 'R:Hand': [0, 0, 0.12], pos: [0.012, 0.01, 0] })],
+    [2.6, merge(poseHold, { head: [0.02, 0.1, 0.13], 'R:Hand': [0, 0, -0.08] })],
     [3.05, { pos: [0, 0, 0], hips: [0, 0.02, 0], spine: [0, 0, -0.01], chest: [0, 0, 0], head: [0, 0.02, 0.03], 'R:Foot': [0, 0, 0],
       'R:Shoulder': [0, 0, 0.05], 'R:UpperArm': [-0.4, 0, 0.4], 'R:LowerArm': [0, -0.7, 0.2], 'R:Hand': [0, 0, 0],
-      'L:Shoulder': [0, 0, 0], 'L:UpperArm': [0.03, 0, 0.1], 'L:LowerArm': [0, -0.1, 0], 'L:Hand': [0, 0, 0], curlR: -0.1, curlL: -0.05 }],
+      'L:Shoulder': [0, 0, 0], 'L:UpperArm': [0.02, 0, 0], 'L:LowerArm': [0, -0.05, 0], 'L:Hand': [0, 0, 0], curlR: -0.1, curlL: -0.05, peaceR: 0 }],
     [3.4, poseRest],
   ],
 };
@@ -328,6 +332,7 @@ function expandPose(pose) {
   const put = (bone, value) => { out[bone] = value; };
   for (const [key, value] of Object.entries(pose)) {
     if (key === 'pos') put('pos', value);
+    else if (key === 'peaceL' || key === 'peaceR') put(key, [value, 0, 0]);
     else if (key === 'curl' || key === 'curlL' || key === 'curlR') {
       if (key !== 'curlR') put('curlL', [value, 0, 0]);
       if (key !== 'curlL') put('curlR', [value, 0, 0]);
@@ -413,8 +418,14 @@ function buildVrma(motion) {
     const values = times.map((t) => {
       let euler;
       if (finger) {
-        const curl = Math.max(0, BASE_CURL + delta(side === 'left' ? 'curlL' : 'curlR', t)[0]) * finger[1];
-        euler = [0, 0, side === 'left' ? -curl : curl];
+        const sign = side === 'left' ? -1 : 1;
+        const relaxed = Math.max(0, BASE_CURL + delta(side === 'left' ? 'curlL' : 'curlR', t)[0]) * finger[1];
+        // ピースの形: 人さし指と中指は伸ばして少し開き、薬指と小指は握る
+        const peace = Math.min(1, Math.max(0, delta(side === 'left' ? 'peaceL' : 'peaceR', t)[0]));
+        const up = part.startsWith('Index') || part.startsWith('Middle');
+        const curl = relaxed + peace * ((up ? 0.03 : 1.35 * finger[1]) - relaxed);
+        const spread = part.endsWith('Proximal') && up ? (part.startsWith('Index') ? 0.13 : -0.1) * peace : 0;
+        euler = [0, spread * sign, curl * sign];
       } else {
         const base = side && BASE[part] ? (side === 'left' ? BASE[part] : mirrorCenter(BASE[part])) : [0, 0, 0];
         const d = delta(name, t);
