@@ -1079,7 +1079,7 @@ if (!app.requestSingleInstanceLock()) {
       setTimeout(() => {
         if (process.env.MATE_TEST_POSE) sendMate('preview', { name: process.env.MATE_TEST_POSE, seconds: 9999 });
         if (process.env.MATE_TEST_SLEEP) setSleeping(true);
-        if (process.env.MATE_TEST_DEMO) playDemo();
+        if (process.env.MATE_TEST_DEMO) sendMate('demo', { from: Number(process.env.MATE_TEST_DEMO) || 0 }); // 開発用: 何番目の動きから始めるか
         if (process.env.MATE_TEST_TAB) settingsWin.webContents.executeJavaScript(`document.querySelector('[data-tab="${process.env.MATE_TEST_TAB}"]').click()`);
         if (process.env.MATE_TEST_DROP_FROM) {
           // 上から落として、足場に乗るかを確かめる

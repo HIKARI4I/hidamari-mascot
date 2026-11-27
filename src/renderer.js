@@ -20,7 +20,7 @@ const FIDGETS = {
 // 始まりと終わりは動き全体に対する割合
 const ACTION_FACE = {
   yawn: [['yawn'], 0.25, 0.85], heart: [['joy', 'happy'], 0.15, 0.9], 'joy-jump': [['joy', 'happy'], 0.1, 0.9],
-  'wave-both': [['smile', 'happy'], 0.1, 0.9], dance: [['joy', 'happy'], 0.05, 0.95], bow: [['smile', 'relaxed'], 0.25, 0.8],
+  'wave-both': [['smile', 'happy'], 0.1, 0.9], dance: [['winkRight', 'smile'], 0.02, 0.98], bow: [['smile', 'relaxed'], 0.25, 0.8],
   doze: [['sleepy', 'blink'], 0.2, 0.75], angry: [['rage', 'angry'], 0.1, 0.9], startled: [['fear', 'surprised'], 0, 0.6],
   'look-around': [['puzzled'], 0.15, 0.85], hair: [['shy', 'smile'], 0.2, 0.85], skirt: [['shy'], 0.2, 0.85],
   'peek-up': [['surprisedO', 'awe'], 0.25, 0.8], reach: [['serious'], 0.2, 0.8], crouch: [['thinking'], 0.2, 0.8],
@@ -108,6 +108,7 @@ let walkDir = 1;
 let walkingActive = false; // メイン側でウィンドウを歩かせている最中か
 let faceYaw = 0;
 let patHold = 0;
+let demoScale = 1; // デモの間だけの見た目の倍率 (足元が基準)
 let viewYaw = 0; // 右クリックしたままドラッグで変えられる、キャラの向き: 左右 (0 = 正面)
 let viewPitch = 0; // 同じく上下 (プラスで上から見下ろす)
 const MAX_PITCH = 1.5;
@@ -153,7 +154,7 @@ function layout() {
   const w = window.innerWidth;
   const h = window.innerHeight;
   renderer.setSize(w, h, false);
-  ppm = settings.heightPx / modelHeight;
+  ppm = (settings.heightPx / modelHeight) * demoScale; // デモの間は、カメラの寄り引きで大きさを変える (体は縮めないので髪や服が乱れない)
   camera.right = w / ppm;
   camera.top = h / ppm;
   camera.updateProjectionMatrix();
@@ -762,11 +763,13 @@ mate.onCursor((p) => {
 // ---------- デモ (紹介動画の撮影用) ----------
 // 決まった順番で動きを見せる。トレイのメニューか Ctrl+Alt+D で始まり、キャラをクリックすると途中で止まる。
 //   action: 1回きりの仕草 (その .vrma が無ければ飛ばす) / behavior: idle・walk・sit を dur 秒
+//   size: 大きさの変化 [[進み具合 0〜1, 倍率], …] (設定は変えず、デモの間だけの見た目)
 //   spin: その間に左右へ回す量 (ラジアン。2π で1回転) / tilt: 途中で上からのぞき込む角度 / sway: 左右に振る幅 / say: 吹き出し
 const DEMO = [
   { action: 'bow', say: 'はじめまして！' },
   { action: 'wave-both', dur: 4 },
   { behavior: 'idle', dur: 5, spin: Math.PI * 2, tilt: 0.3, say: 'くるっと回れるよ' },
+  { behavior: 'idle', dur: 5, size: [[0, 1], [0.28, 0.55], [0.42, 0.55], [0.72, 1.18], [0.86, 1.18], [1, 1]], say: '大きさも変えられるよ' },
   { action: 'heart', dur: 4.5 },
   { behavior: 'walk', dir: -1, dur: 2.2 },
   { behavior: 'walk', dir: 1, dur: 2.2 },
@@ -776,10 +779,27 @@ const DEMO = [
 ];
 let demo = null;
 
-function startDemo() {
+// [[進み具合, 値], …] をなめらかにつないだ時の、k での値
+function alongKeys(keys, k) {
+  for (let i = 1; i < keys.length; i++) {
+    if (k <= keys[i][0]) {
+      const u = clamp((k - keys[i - 1][0]) / (keys[i][0] - keys[i - 1][0]), 0, 1);
+      return keys[i - 1][1] + (keys[i][1] - keys[i - 1][1]) * u * u * (3 - 2 * u);
+    }
+  }
+  return keys[keys.length - 1][1];
+}
+
+function setDemoScale(value) {
+  if (value === demoScale) return;
+  demoScale = value;
+  layout();
+}
+
+function startDemo(from = 0) {
   if (!vrm || dragging || falling) return;
   preview = null;
-  demo = { index: -1, t: 0, dur: 0, yaw0: 0, home: { yaw: viewYaw, pitch: viewPitch } };
+  demo = { index: from - 1, t: 0, dur: 0, yaw0: 0, home: { yaw: viewYaw, pitch: viewPitch } };
   viewYaw = 0;
   viewPitch = 0;
   nextDemoStep();
@@ -789,6 +809,7 @@ function stopDemo() {
   if (!demo) return;
   viewYaw = demo.home.yaw;
   viewPitch = demo.home.pitch;
+  setDemoScale(1);
   demo = null;
   setBehavior('idle', rand(4, 8));
 }
@@ -829,13 +850,15 @@ function updateDemo(dt) {
   if (stepDef.spin) viewYaw = demo.yaw0 + stepDef.spin * ease;
   if (stepDef.sway) viewYaw = demo.yaw0 + stepDef.sway * Math.sin(k * Math.PI * 4) * Math.sin(k * Math.PI);
   if (stepDef.tilt) viewPitch = stepDef.tilt * Math.sin(k * Math.PI);
+  if (stepDef.size) setDemoScale(alongKeys(stepDef.size, k));
   if (demo.t >= demo.dur) {
     viewYaw = Math.atan2(Math.sin(viewYaw), Math.cos(viewYaw));
     viewPitch = 0;
+    setDemoScale(1);
     nextDemoStep();
   }
 }
-mate.onDemo(() => (demo ? stopDemo() : startDemo()));
+mate.onDemo((data) => (demo ? stopDemo() : startDemo(data?.from ?? 0)));
 
 // ウィンドウに届いた本物のクリックを覚えておく
 const domSeen = {};
