@@ -20,7 +20,7 @@ const FIDGETS = {
 // 始まりと終わりは動き全体に対する割合
 const ACTION_FACE = {
   yawn: [['yawn'], 0.25, 0.85], heart: [['joy', 'happy'], 0.15, 0.9], 'joy-jump': [['joy', 'happy'], 0.1, 0.9],
-  'wave-both': [['smile', 'happy'], 0.1, 0.9], dance: [['winkRight', 'smile'], 0.02, 0.98], bow: [['smile', 'relaxed'], 0.25, 0.8],
+  'wave-both': [['smile', 'happy'], 0.1, 0.9], dance: [['winkRight'], 0.2, 0.2667], bow: [['smile', 'relaxed'], 0.25, 0.8],
   doze: [['sleepy', 'blink'], 0.2, 0.75], angry: [['rage', 'angry'], 0.1, 0.9], startled: [['fear', 'surprised'], 0, 0.6],
   'look-around': [['puzzled'], 0.15, 0.85], hair: [['shy', 'smile'], 0.2, 0.85], skirt: [['shy'], 0.2, 0.85],
   'peek-up': [['surprisedO', 'awe'], 0.25, 0.8], reach: [['serious'], 0.2, 0.8], crouch: [['thinking'], 0.2, 0.8],
@@ -489,7 +489,8 @@ function updateFace(dt, face) {
   let actWeight = 0;
   if (actName) {
     const k = currentAction.time / currentAction.getClip().duration;
-    actWeight = clamp(Math.min((k - actDef[1]) / 0.08, (actDef[2] - k) / 0.08), 0, 1);
+    const ramp = Math.min(0.08, 0.15 / currentAction.getClip().duration); // 出入りは長くても0.15秒
+    actWeight = clamp(Math.min((k - actDef[1]) / ramp, (actDef[2] - k) / ramp), 0, 1);
   }
   // 何もしていない時の、ふとした表情
   const calm = !actName && happyBase === 0 && face.surprised < 0.05 && m.pat < 0.05 && !dragging && !falling && !asleep && (face.yawn ?? 0) === 0
